@@ -1,0 +1,9 @@
+{
+  "test_dish": {
+    "name": "Тестовый бургер",
+    "calories": 540,
+    "protein": "26",
+    "fat": "28",
+    "carbs": "42"
+  }
+}
