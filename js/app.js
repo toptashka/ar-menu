@@ -1,14 +1,18 @@
-// 1. Компонент вращения свайпом
+window.isDetached = false;
+
+// 1. Компонент вращения свайпом (работает только пока блюдо на маркере)
 AFRAME.registerComponent('drag-rotate', {
   init: function () {
     let isDragging = false, prevX = 0;
     window.addEventListener('touchstart', e => { 
-      if(!e.target.closest('#bottom-sheet') && !e.target.closest('.btn')) { 
-        isDragging = true; prevX = e.touches[0].clientX; 
+      if (window.isDetached) return;
+      if (!e.target.closest('#bottom-sheet') && !e.target.closest('.btn')) { 
+        isDragging = true; 
+        prevX = e.touches[0].clientX; 
       }
     });
     window.addEventListener('touchmove', e => {
-      if (!isDragging) return;
+      if (!isDragging || window.isDetached) return;
       let delta = e.touches[0].clientX - prevX;
       prevX = e.touches[0].clientX;
       let rot = this.el.getAttribute('rotation');
@@ -23,57 +27,85 @@ AFRAME.registerComponent('manual-detach', {
   init: function () {
     const marker = this.el;
     
-    // Когда камера увидела маркер
     marker.addEventListener('targetFound', () => {
       if (!window.isDetached) {
         document.getElementById('action-buttons').style.display = 'flex';
-        document.getElementById('hint').innerText = "Блюдо найдено! Нажми 'Забрать', чтобы зафиксировать его.";
+        const hint = document.getElementById('hint');
+        hint.style.opacity = '1';
+        hint.innerText = "Блюдо найдено! Нажми 'Забрать блюдо', чтобы зафиксировать его.";
       }
     });
 
-    // Когда камера потеряла маркер
     marker.addEventListener('targetLost', () => {
       if (!window.isDetached) {
         document.getElementById('action-buttons').style.display = 'none';
-        document.getElementById('hint').innerText = "Наведи камеру на маркер на столе";
+        const hint = document.getElementById('hint');
+        hint.style.opacity = '1';
+        hint.innerText = "Наведи камеру на маркер на столе";
       }
     });
   }
 });
 
-// 3. UI Логика и работа с "БД"
-window.isDetached = false;
-
+// 3. Отвязка блюда (переход в свободный режим поверх камеры)
 window.detachDish = function() {
   window.isDetached = true;
+  document.body.classList.add('detached-mode');
   
-  // 1. Прячем AR-камеру
-  document.getElementById('ar-scene').style.display = 'none';
+  // Прячем модель на маркере, но оставляем саму камеру работать на фоне
+  document.getElementById('marker-dish').setAttribute('visible', 'false');
   
-  // 2. Показываем идеальный 3D-плеер
-  document.getElementById('3d-viewer-container').style.display = 'block';
+  // Показываем 3D-плеер поверх камеры
+  document.getElementById('viewer-container').style.display = 'block';
   
-  // 3. Меняем кнопки
+  // Переключаем кнопки
+  document.getElementById('action-buttons').style.display = 'flex';
   document.getElementById('btn-detach').style.display = 'none';
   document.getElementById('btn-info').style.display = 'block';
+  document.getElementById('btn-reset').style.display = 'block';
   
-  // 4. Обновляем подсказку
+  // Обновляем подсказку
   const hint = document.getElementById('hint');
-  hint.innerText = "Рассматривай блюдо со всех сторон!";
-  setTimeout(() => { hint.style.opacity = '0'; }, 3000);
-}
+  hint.style.opacity = '1';
+  hint.innerText = "Крути блюдо пальцем и приближай двумя пальцами!";
+  setTimeout(() => { 
+    if (window.isDetached) hint.style.opacity = '0'; 
+  }, 3000);
+};
 
-// Открыть/закрыть КБЖУ
+// 4. Возврат обратно к сканированию стола
+window.resetAR = function() {
+  window.isDetached = false;
+  document.body.classList.remove('detached-mode');
+  
+  // Прячем 3D-плеер и шторку КБЖУ
+  document.getElementById('viewer-container').style.display = 'none';
+  document.getElementById('bottom-sheet').classList.remove('active');
+  
+  // Возвращаем видимость модели на маркере
+  document.getElementById('marker-dish').setAttribute('visible', 'true');
+  
+  // Сбрасываем кнопки
+  document.getElementById('btn-detach').style.display = 'block';
+  document.getElementById('btn-info').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'none';
+  document.getElementById('action-buttons').style.display = 'none';
+  
+  const hint = document.getElementById('hint');
+  hint.style.opacity = '1';
+  hint.innerText = "Наведи камеру на маркер на столе";
+};
+
+// 5. Открыть/закрыть КБЖУ
 window.toggleInfo = function() {
   document.getElementById('bottom-sheet').classList.toggle('active');
-}
+};
 
-// Загрузка данных из БД при старте
+// 6. Загрузка данных из БД при старте
 document.addEventListener("DOMContentLoaded", () => {
   fetch('./data/menu.json')
     .then(response => response.json())
     .then(data => {
-      // Подставляем данные для первого блюда
       const dish = data.test_dish;
       document.querySelector('.dish-title').innerText = dish.name;
       document.querySelector('#val-cal').innerText = dish.calories;

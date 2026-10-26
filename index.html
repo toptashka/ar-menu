@@ -8,7 +8,6 @@
   <!-- Библиотеки AR и 3D -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  <!-- НОВЫЙ СКРИПТ: Плеер от Google -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
   
   <link rel="stylesheet" href="./css/style.css">
@@ -21,11 +20,19 @@
   <div id="action-buttons">
     <button id="btn-detach" class="btn" onclick="detachDish()">Забрать блюдо</button>
     <button id="btn-info" class="btn" onclick="toggleInfo()">Состав и КБЖУ</button>
+    <button id="btn-reset" class="btn" onclick="resetAR()">На стол</button>
   </div>
 
-  <!-- Контейнер для 3D-плеера (скрыт до нажатия "Забрать") -->
-  <div id="3d-viewer-container">
-    <model-viewer id="interactive-dish" src="./dish.glb" auto-rotate camera-controls disable-zoom></model-viewer>
+  <!-- Контейнер для 3D-плеера поверх камеры (исправлен ID без цифры в начале) -->
+  <div id="viewer-container">
+    <model-viewer 
+      id="interactive-dish" 
+      src="./dish.glb" 
+      camera-controls 
+      auto-rotate 
+      shadow-intensity="1"
+      touch-action="pan-y">
+    </model-viewer>
   </div>
 
   <!-- AR-сцена -->
