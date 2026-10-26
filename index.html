@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>AR Меню</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #bottom-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px 20px 0 0; padding: 20px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15); z-index: 1000;
+    }
+    .dish-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; }
+    .nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+    .val { font-size: 16px; font-weight: bold; }
+    .lbl { font-size: 12px; color: #666; }
+    .hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 999; }
+  </style>
+
+  <script>
+    // Вращение пальцем
+    AFRAME.registerComponent('drag-rotate', {
+      init: function () {
+        let isDragging = false, prevX = 0;
+        window.addEventListener('touchstart', e => { if(!e.target.closest('#bottom-sheet')) { isDragging = true; prevX = e.touches[0].clientX; }});
+        window.addEventListener('touchmove', e => {
+          if (!isDragging) return;
+          let delta = e.touches[0].clientX - prevX;
+          prevX = e.touches[0].clientX;
+          let rot = this.el.getAttribute('rotation');
+          this.el.setAttribute('rotation', {x: rot.x, y: rot.y + delta * 0.5, z: rot.z});
+        });
+        window.addEventListener('touchend', () => isDragging = false);
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="hint">Наведи камеру на маркер</div>
+
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-assets>
+      <a-asset-item id="dish" src="./dish.glb"></a-asset-item>
+    </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-gltf-model src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
+    </a-entity>
+  </a-scene>
+
+  <div id="bottom-sheet">
+    <p class="dish-title">Тестовое блюдо</p>
+    <div class="nutrition-grid">
+      <div><div class="val">540</div><div class="lbl">Ккал</div></div>
+      <div><div class="val">26г</div><div class="lbl">Белки</div></div>
+      <div><div class="val">28г</div><div class="lbl">Жиры</div></div>
+      <div><div class="val">42г</div><div class="lbl">Углеводы</div></div>
+    </div>
+  </div>
+</body>
+</html>
