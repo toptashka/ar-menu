@@ -11,13 +11,13 @@
   <style>
     body { margin: 0; overflow: hidden; font-family: sans-serif; }
     
-    /* 1. ЖЕСТКО СКРЫВАЕМ КНОПКУ VR, КОТОРАЯ ПЕРЕКРЫВАЕТ ИНТЕРФЕЙС */
+    /* 1. ПРЯЧЕМ КНОПКУ VR, ЧТОБЫ НЕ ПЕРЕКРЫВАЛА УГЛЕВОДЫ */
     .a-enter-vr, .a-enter-ar { display: none !important; }
 
     #bottom-sheet {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px 20px 0 0; padding: 20px 20px 30px; /* добавил отступ снизу */
+      border-radius: 20px 20px 0 0; padding: 20px 20px 30px;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.15); z-index: 9999;
     }
     .dish-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; }
@@ -28,11 +28,12 @@
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
       background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; 
       border-radius: 20px; font-size: 14px; z-index: 9999; text-align: center; width: 80%;
+      transition: opacity 0.5s;
     }
   </style>
 
   <script>
-    // Компонент для вращения (остается без изменений)
+    // Скрипт для вращения пальцем (теперь крутит модель перед экраном)
     AFRAME.registerComponent('drag-rotate', {
       init: function () {
         let isDragging = false, prevX = 0;
@@ -50,39 +51,41 @@
       }
     });
 
-    // 2. НОВЫЙ КОМПОНЕНТ: ОТВЯЗКА ОТ МАРКЕРА И ПРИВЯЗКА К КАМЕРЕ
-    AFRAME.registerComponent('grab-on-found', {
+    // Умная отвязка: переключает видимость между столом и экраном
+    AFRAME.registerComponent('smart-detach', {
       init: function () {
-        let isGrabbed = false;
+        const marker = this.el;
+        const markerDish = document.querySelector('#marker-dish');
+        const cameraDishContainer = document.querySelector('#camera-dish-container');
+        const hint = document.querySelector('.hint');
         
-        // Слушаем событие: "Маркер найден"
-        this.el.addEventListener('targetFound', () => {
-          if (isGrabbed) return; // Если уже привязали к экрану, игнорируем
-          isGrabbed = true;
-          
-          const model = document.querySelector('#dish-model');
-          const camera = document.querySelector('a-camera');
-          const hint = document.querySelector('.hint');
-          
-          // Переносим модель из маркера в камеру (теперь она летает вместе с телефоном)
-          camera.appendChild(model);
-          
-          // Настраиваем новую позицию прямо перед экраном
-          // Z = -1 означает, что блюдо висит в 1 метре перед камерой
-          // Y = -0.2 немного опускает его вниз, чтобы не перекрывать центр
-          model.setAttribute('position', '0 -0.2 -1'); 
-          
-          // Наклоняем блюдо немного на себя (по оси X) для красивого обзора
-          model.setAttribute('rotation', '20 0 0'); 
-          
-          // Масштаб привязанный к экрану (возможно, придется чуть поменять под твою модель)
-          model.setAttribute('scale', '0.3 0.3 0.3'); 
+        let hasBeenFound = false;
+        let detached = false;
 
-          // Меняем текст подсказки
-          hint.innerText = "Блюдо захвачено! Теперь его можно вращать свайпом.";
-          
-          // Прячем подсказку через 4 секунды
-          setTimeout(() => { hint.style.display = 'none'; }, 4000);
+        // Когда камера увидела маркер
+        marker.addEventListener('targetFound', () => {
+          if (!hasBeenFound) {
+            hasBeenFound = true;
+            hint.innerText = "Супер! Теперь отведи камеру от стола, чтобы рассмотреть блюдо.";
+          }
+        });
+
+        // Когда ты убрал камеру от маркера
+        marker.addEventListener('targetLost', () => {
+          if (hasBeenFound && !detached) {
+            detached = true;
+            
+            // Прячем модель на столе
+            markerDish.setAttribute('visible', 'false');
+            
+            // Показываем модель, привязанную к экрану
+            cameraDishContainer.setAttribute('visible', 'true');
+            
+            hint.innerText = "Блюдо отвязано! Крути его свайпом.";
+            
+            // Плавно скрываем подсказку через 4 секунды
+            setTimeout(() => { hint.style.opacity = '0'; }, 4000);
+          }
         });
       }
     });
@@ -91,21 +94,31 @@
 <body>
   <div class="hint">Наведи камеру на маркер на столе</div>
 
-  <!-- Отключаем стандартный UI сканирования MindAR (uiScanning: no) -->
-  <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiScanning: no;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+  <!-- Рамка сканирования возвращена (убрали uiScanning: no) -->
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    
     <a-assets>
       <a-asset-item id="dish" src="./dish.glb"></a-asset-item>
     </a-assets>
     
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <!-- Камера телефона -->
+    <a-camera position="0 0 0" look-controls="enabled: false">
+      <!-- Модель 2: Привязана к камере, сначала невидима. Появится после отвязки -->
+      <!-- Z="-1" означает, что она висит в 1 метре перед телефоном -->
+      <a-entity id="camera-dish-container" visible="false" position="0 -0.2 -1" rotation="20 0 0">
+        <a-gltf-model src="#dish" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
+      </a-entity>
+    </a-camera>
     
-    <!-- Вешаем наш новый скрипт grab-on-found на маркер -->
-    <a-entity mindar-image-target="targetIndex: 0" grab-on-found>
-      <!-- Добавили id="dish-model", чтобы скрипт мог его найти и забрать -->
-      <a-gltf-model id="dish-model" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
+    <!-- Маркер на столе. К нему привязан скрипт smart-detach -->
+    <a-entity mindar-image-target="targetIndex: 0" smart-detach>
+      <!-- Модель 1: Висит на маркере изначально -->
+      <a-gltf-model id="marker-dish" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
     </a-entity>
+    
   </a-scene>
 
+  <!-- Шторка КБЖУ. Кнопка VR её больше не перекрывает -->
   <div id="bottom-sheet">
     <p class="dish-title">Тестовое блюдо</p>
     <div class="nutrition-grid">
