@@ -51,3 +51,23 @@ body.detached-mode .mindar-ui-overlay { display: none !important; }
 .nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
 .val { font-size: 18px; font-weight: bold; color: #111; }
 .lbl { font-size: 12px; color: #666; }
+
+/* --- Селектор блюд --- */
+#dish-selector {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px; z-index: 9998; 
+  background: rgba(255, 255, 255, 0.9); padding: 8px; 
+  border-radius: 20px; overflow-x: auto; width: max-content; max-width: 90vw;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.dish-btn {
+  padding: 8px 16px; border: none; border-radius: 15px; 
+  background: transparent; font-weight: bold; 
+  cursor: pointer; white-space: nowrap; color: #333;
+}
+
+.dish-btn.active { background: #007AFF; color: white; }
+
+/* Прячем селектор блюд, когда блюдо оторвано от стола */
+body.detached-mode #dish-selector { display: none; }

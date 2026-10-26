@@ -1,9 +1,22 @@
 {
-  "test_dish": {
-    "name": "Тестовый бургер",
-    "calories": 540,
-    "protein": "26",
-    "fat": "28",
-    "carbs": "42"
+  "burger": {
+    "name": "Бургер",
+    "calories": 540, "protein": "26", "fat": "28", "carbs": "42",
+    "model": "./dish.glb"
+  },
+  "donut": {
+    "name": "Пончик",
+    "calories": 320, "protein": "4", "fat": "18", "carbs": "36",
+    "model": "./models/Donut.glb"
+  },
+  "icecream": {
+    "name": "Мороженое",
+    "calories": 210, "protein": "3", "fat": "11", "carbs": "25",
+    "model": "./models/IceCream.glb"
+  },
+  "pancakes": {
+    "name": "Блинчики",
+    "calories": 450, "protein": "12", "fat": "20", "carbs": "55",
+    "model": "./models/Pancakes.glb"
   }
 }

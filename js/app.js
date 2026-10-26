@@ -136,17 +136,40 @@ window.toggleInfo = function() {
   document.getElementById('bottom-sheet').classList.toggle('active');
 };
 
-// 6. Загрузка КБЖУ из JSON
+window.menuData = {};
+
+// Переключение блюд
+window.switchDish = function(dishId, btnElement) {
+  if (window.isDetached) return; // Блокируем смену блюда в воздухе
+  
+  // Меняем 3D-модель
+  document.getElementById('marker-dish').setAttribute('src', window.menuData[dishId].model);
+  
+  // Подсвечиваем активную кнопку
+  document.querySelectorAll('.dish-btn').forEach(btn => btn.classList.remove('active'));
+  btnElement.classList.add('active');
+  
+  // Обновляем КБЖУ
+  updateMenuUI(dishId);
+};
+
+// Функция обновления текста в шторке
+window.updateMenuUI = function(dishId) {
+  const dish = window.menuData[dishId];
+  document.querySelector('.dish-title').innerText = dish.name;
+  document.querySelector('#val-cal').innerText = dish.calories;
+  document.querySelector('#val-pro').innerText = dish.protein + 'г';
+  document.querySelector('#val-fat').innerText = dish.fat + 'г';
+  document.querySelector('#val-carb').innerText = dish.carbs + 'г';
+};
+
+// Загрузка базы данных при старте
 document.addEventListener("DOMContentLoaded", () => {
   fetch('./data/menu.json')
     .then(response => response.json())
     .then(data => {
-      const dish = data.test_dish;
-      document.querySelector('.dish-title').innerText = dish.name;
-      document.querySelector('#val-cal').innerText = dish.calories;
-      document.querySelector('#val-pro').innerText = dish.protein + 'г';
-      document.querySelector('#val-fat').innerText = dish.fat + 'г';
-      document.querySelector('#val-carb').innerText = dish.carbs + 'г';
+      window.menuData = data;
+      updateMenuUI('burger'); // Блюдо по умолчанию при запуске
     })
     .catch(err => console.error("Ошибка загрузки БД:", err));
 });

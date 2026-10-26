@@ -5,17 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AR Меню</title>
 
-  <!-- Библиотеки AR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  
-  <!-- Версия ?v=3 сбрасывает старый кэш телефона -->
-  <link rel="stylesheet" href="./css/style.css?v=3">
-  <script src="./js/app.js?v=3"></script>
+  <link rel="stylesheet" href="./css/style.css?v=4">
+  <script src="./js/app.js?v=4"></script>
 </head>
 <body>
   
   <div id="hint">Наведи камеру на маркер на столе</div>
+
+  <!-- Меню выбора блюда (сверху) -->
+  <div id="dish-selector">
+    <button class="dish-btn active" onclick="switchDish('burger', this)">Бургер</button>
+    <button class="dish-btn" onclick="switchDish('donut', this)">Пончик</button>
+    <button class="dish-btn" onclick="switchDish('icecream', this)">Мороженое</button>
+    <button class="dish-btn" onclick="switchDish('pancakes', this)">Блинчики</button>
+  </div>
 
   <div id="action-buttons">
     <button id="btn-detach" class="btn" onclick="detachDish()">Забрать блюдо</button>
@@ -23,21 +28,14 @@
     <button id="btn-reset" class="btn" onclick="resetAR()">Вернуть на маркер</button>
   </div>
 
-  <!-- AR-сцена -->
   <a-scene id="ar-scene" mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    <a-assets>
-      <a-asset-item id="dish" src="./dish.glb"></a-asset-item>
-    </a-assets>
-    
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     
-    <!-- Единственная модель, которая замораживается на экране при нажатии кнопки -->
     <a-entity id="marker-target" mindar-image-target="targetIndex: 0" manual-detach>
-      <a-gltf-model id="marker-dish" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
+      <a-gltf-model id="marker-dish" src="./dish.glb" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
     </a-entity>
   </a-scene>
 
-  <!-- Шторка КБЖУ -->
   <div id="bottom-sheet">
     <button class="close-btn" onclick="toggleInfo()">×</button>
     <p class="dish-title">Загрузка...</p>
