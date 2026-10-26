@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AR Меню</title>
 
-  <!-- Библиотеки AR и 3D -->
+  <!-- Библиотеки AR -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
   
-  <link rel="stylesheet" href="./css/style.css">
-  <script src="./js/app.js"></script>
+  <!-- Версия ?v=3 сбрасывает старый кэш телефона -->
+  <link rel="stylesheet" href="./css/style.css?v=3">
+  <script src="./js/app.js?v=3"></script>
 </head>
 <body>
   
@@ -20,19 +20,7 @@
   <div id="action-buttons">
     <button id="btn-detach" class="btn" onclick="detachDish()">Забрать блюдо</button>
     <button id="btn-info" class="btn" onclick="toggleInfo()">Состав и КБЖУ</button>
-    <button id="btn-reset" class="btn" onclick="resetAR()">На стол</button>
-  </div>
-
-  <!-- Контейнер для 3D-плеера поверх камеры (исправлен ID без цифры в начале) -->
-  <div id="viewer-container">
-    <model-viewer 
-      id="interactive-dish" 
-      src="./dish.glb" 
-      camera-controls 
-      auto-rotate 
-      shadow-intensity="1"
-      touch-action="pan-y">
-    </model-viewer>
+    <button id="btn-reset" class="btn" onclick="resetAR()">Вернуть на маркер</button>
   </div>
 
   <!-- AR-сцена -->
@@ -40,9 +28,11 @@
     <a-assets>
       <a-asset-item id="dish" src="./dish.glb"></a-asset-item>
     </a-assets>
+    
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     
-    <a-entity mindar-image-target="targetIndex: 0" manual-detach>
+    <!-- Единственная модель, которая замораживается на экране при нажатии кнопки -->
+    <a-entity id="marker-target" mindar-image-target="targetIndex: 0" manual-detach>
       <a-gltf-model id="marker-dish" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
     </a-entity>
   </a-scene>
