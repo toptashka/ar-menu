@@ -46,3 +46,19 @@ body { margin: 0; overflow: hidden; font-family: sans-serif; }
 .nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
 .val { font-size: 18px; font-weight: bold; color: #111; }
 .lbl { font-size: 12px; color: #666; }
+
+/* --- Стили для нового 3D-режима --- */
+#3d-viewer-container {
+  display: none; /* Скрыт по умолчанию */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: radial-gradient(circle, #ffffff 0%, #e0e0e0 100%); /* Красивый фон */
+  z-index: 9000; /* Поверх AR, но под шторкой КБЖУ */
+}
+
+model-viewer {
+  width: 100%;
+  height: 100%;
+  --poster-color: transparent;
+}

@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>AR Меню</title>
 
-  <!-- Подключение библиотек -->
+  <!-- Библиотеки AR и 3D -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <!-- НОВЫЙ СКРИПТ: Плеер от Google -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
   
-  <!-- Подключение наших файлов -->
   <link rel="stylesheet" href="./css/style.css">
   <script src="./js/app.js"></script>
 </head>
@@ -17,29 +18,26 @@
   
   <div id="hint">Наведи камеру на маркер на столе</div>
 
-  <!-- Кнопки управления (появляются при сканировании) -->
   <div id="action-buttons">
     <button id="btn-detach" class="btn" onclick="detachDish()">Забрать блюдо</button>
     <button id="btn-info" class="btn" onclick="toggleInfo()">Состав и КБЖУ</button>
   </div>
 
-  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    
+  <!-- Контейнер для 3D-плеера (скрыт до нажатия "Забрать") -->
+  <div id="3d-viewer-container">
+    <model-viewer id="interactive-dish" src="./dish.glb" auto-rotate camera-controls disable-zoom></model-viewer>
+  </div>
+
+  <!-- AR-сцена -->
+  <a-scene id="ar-scene" mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
     <a-assets>
       <a-asset-item id="dish" src="./dish.glb"></a-asset-item>
     </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     
-    <a-camera position="0 0 0" look-controls="enabled: false">
-      <a-entity id="camera-dish-container" visible="false" position="0 -0.2 -1" rotation="20 0 0">
-        <a-gltf-model src="#dish" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
-      </a-entity>
-    </a-camera>
-    
-    <!-- Скрипт manual-detach сам покажет кнопку "Забрать" -->
     <a-entity mindar-image-target="targetIndex: 0" manual-detach>
-      <a-gltf-model id="marker-dish" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <a-gltf-model id="marker-dish" src="#dish" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
     </a-entity>
-    
   </a-scene>
 
   <!-- Шторка КБЖУ -->

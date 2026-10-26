@@ -44,21 +44,22 @@ AFRAME.registerComponent('manual-detach', {
 // 3. UI Логика и работа с "БД"
 window.isDetached = false;
 
-// Функция отвязки блюда
 window.detachDish = function() {
   window.isDetached = true;
   
-  // Переключаем видимость моделей
-  document.querySelector('#marker-dish').setAttribute('visible', 'false');
-  document.querySelector('#camera-dish-container').setAttribute('visible', 'true');
+  // 1. Прячем AR-камеру
+  document.getElementById('ar-scene').style.display = 'none';
   
-  // Меняем кнопки
+  // 2. Показываем идеальный 3D-плеер
+  document.getElementById('3d-viewer-container').style.display = 'block';
+  
+  // 3. Меняем кнопки
   document.getElementById('btn-detach').style.display = 'none';
   document.getElementById('btn-info').style.display = 'block';
   
-  // Обновляем подсказку
+  // 4. Обновляем подсказку
   const hint = document.getElementById('hint');
-  hint.innerText = "Блюдо отвязано! Крути его свайпом.";
+  hint.innerText = "Рассматривай блюдо со всех сторон!";
   setTimeout(() => { hint.style.opacity = '0'; }, 3000);
 }
 
