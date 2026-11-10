@@ -1,22 +1,42 @@
 {
   "burger": {
     "name": "Бургер",
-    "calories": 540, "protein": "26", "fat": "28", "carbs": "42",
-    "model": "./dish.glb"
+    "calories": 540,
+    "protein": 26,
+    "fat": 28,
+    "carbs": 42,
+    "composition": "Булочка бриошь, рубленая котлета из мраморной говядины, сыр чеддер, маринованные огурцы, красный лук, фирменный томатный соус.",
+    "model_whole": "./dish.glb",
+    "model_cut": "./dish.glb"
   },
   "donut": {
     "name": "Пончик",
-    "calories": 320, "protein": "4", "fat": "18", "carbs": "36",
-    "model": "./models/Donut.glb"
+    "calories": 320,
+    "protein": 4,
+    "fat": 18,
+    "carbs": 36,
+    "composition": "Воздушное дрожжевое тесто, клубничная глазурь на основе белого шоколада, разноцветная кондитерская посыпка.",
+    "model_whole": "./models/Donut.glb",
+    "model_cut": "./models/Donut.glb"
   },
   "icecream": {
     "name": "Мороженое",
-    "calories": 210, "protein": "3", "fat": "11", "carbs": "25",
-    "model": "./models/IceCream.glb"
+    "calories": 210,
+    "protein": 3,
+    "fat": 11,
+    "carbs": 25,
+    "composition": "Натуральные сливки 33%, цельное молоко, стручковая ваниль, хрустящий вафельный рожок, карамельный топпинг.",
+    "model_whole": "./models/IceCream.glb",
+    "model_cut": "./models/IceCream.glb"
   },
   "pancakes": {
     "name": "Блинчики",
-    "calories": 450, "protein": "12", "fat": "20", "carbs": "55",
-    "model": "./models/Pancakes.glb"
+    "calories": 450,
+    "protein": 12,
+    "fat": 20,
+    "carbs": 55,
+    "composition": "Пшеничная мука высшего сорта, фермерское молоко, яйца, сливочное масло, натуральный кленовый сироп и свежие ягоды.",
+    "model_whole": "./models/Pancakes.glb",
+    "model_cut": "./models/Pancakes.glb"
   }
 }

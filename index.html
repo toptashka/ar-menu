@@ -2,50 +2,103 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>AR Меню</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AR Меню — 3D Визуализация блюд</title>
 
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  <link rel="stylesheet" href="./css/style.css?v=4">
-  <script src="./js/app.js?v=4"></script>
+  <!-- Google Model Viewer для 3D и безмаркерного SLAM WebAR (ARCore / ARKit) -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+
+  <link rel="stylesheet" href="./css/style.css?v=5">
+  <script src="./js/app.js?v=5" defer></script>
 </head>
 <body>
-  
-  <div id="hint">Наведи камеру на маркер на столе</div>
 
-  <!-- Меню выбора блюда (сверху) -->
-  <div id="dish-selector">
-    <button class="dish-btn active" onclick="switchDish('burger', this)">Бургер</button>
-    <button class="dish-btn" onclick="switchDish('donut', this)">Пончик</button>
-    <button class="dish-btn" onclick="switchDish('icecream', this)">Мороженое</button>
-    <button class="dish-btn" onclick="switchDish('pancakes', this)">Блинчики</button>
-  </div>
-
-  <div id="action-buttons">
-    <button id="btn-detach" class="btn" onclick="detachDish()">Забрать блюдо</button>
-    <button id="btn-info" class="btn" onclick="toggleInfo()">Состав и КБЖУ</button>
-    <button id="btn-reset" class="btn" onclick="resetAR()">Вернуть на маркер</button>
-  </div>
-
-  <a-scene id="ar-scene" mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    
-    <a-entity id="marker-target" mindar-image-target="targetIndex: 0" manual-detach>
-      <a-gltf-model id="marker-dish" src="./dish.glb" position="0 0 0.1" rotation="90 0 0" scale="0.5 0.5 0.5" drag-rotate></a-gltf-model>
-    </a-entity>
-  </a-scene>
-
-  <div id="bottom-sheet">
-    <button class="close-btn" onclick="toggleInfo()">×</button>
-    <p class="dish-title">Загрузка...</p>
-    <div class="nutrition-grid">
-      <div><div id="val-cal" class="val">-</div><div class="lbl">Ккал</div></div>
-      <div><div id="val-pro" class="val">-</div><div class="lbl">Белки</div></div>
-      <div><div id="val-fat" class="val">-</div><div class="lbl">Жиры</div></div>
-      <div><div id="val-carb" class="val">-</div><div class="lbl">Углеводы</div></div>
+  <!-- Верхняя панель: подсказка и селектор блюд (скрывается, если открыт конкретный ?dish=...) -->
+  <header class="top-bar">
+    <div id="dish-selector" class="dish-selector">
+      <!-- Кнопки генерируются автоматически из БД / menu.json -->
     </div>
-  </div>
+  </header>
+
+  <!-- Плавающая кнопка переключения режима "В разрезе" -->
+  <button id="btn-cut" class="floating-cut-btn" onclick="toggleCutView()" title="Посмотреть в разрезе">
+    <span class="cut-icon">🔪</span>
+    <span id="btn-cut-text">В разрезе</span>
+  </button>
+
+  <!-- Основная 3D-витрина и SLAM AR-плеер -->
+  <main class="viewer-wrapper">
+    <model-viewer
+      id="dish-viewer"
+      src="./dish.glb"
+      alt="3D-модель блюда"
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="1500"
+      rotation-per-second="20deg"
+      shadow-intensity="1.2"
+      shadow-softness="0.8"
+      exposure="1.05"
+      touch-action="pan-y"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      ar-scale="fixed"
+      ar-placement="floor">
+
+      <!-- Кастомная кнопка запуска SLAM AR ("Поставить на стол" в масштабе 1:1) -->
+      <button slot="ar-button" id="ar-button" class="ar-cta-btn">
+        📷 Поставить на стол (1:1)
+      </button>
+
+      <!-- Индикатор загрузки 3D-модели -->
+      <div id="loading-overlay" class="loading-overlay" slot="poster">
+        <div class="spinner"></div>
+        <span>Загрузка 3D-модели...</span>
+      </div>
+    </model-viewer>
+  </main>
+
+  <!-- Fallback-кнопка AR (если устройство тестируется с ПК или браузер требует явного вызова) -->
+  <button id="ar-fallback-btn" class="ar-cta-btn fallback-ar" onclick="triggerAR()">
+    📷 Поставить на стол (1:1)
+  </button>
+
+  <!-- Нижняя двухступенчатая шторка: КБЖУ (всегда видно) + Состав (по свайпу вверх / клику) -->
+  <section id="bottom-sheet" class="bottom-sheet">
+    <div id="sheet-handle-area" class="sheet-handle-area" onclick="toggleSheet()">
+      <div class="drag-handle"></div>
+      <div class="sheet-header">
+        <h1 id="dish-title" class="dish-title">Загрузка...</h1>
+        <span id="sheet-toggle-hint" class="sheet-toggle-hint">Состав ▲</span>
+      </div>
+    </div>
+
+    <!-- Сетка КБЖУ -->
+    <div class="nutrition-grid">
+      <div class="nutri-card">
+        <div id="val-cal" class="val">-</div>
+        <div class="lbl">Ккал</div>
+      </div>
+      <div class="nutri-card">
+        <div id="val-pro" class="val">-</div>
+        <div class="lbl">Белки</div>
+      </div>
+      <div class="nutri-card">
+        <div id="val-fat" class="val">-</div>
+        <div class="lbl">Жиры</div>
+      </div>
+      <div class="nutri-card">
+        <div id="val-carb" class="val">-</div>
+        <div class="lbl">Углеводы</div>
+      </div>
+    </div>
+
+    <!-- Выдвижной блок с полным составом -->
+    <div id="composition-block" class="composition-block">
+      <div class="composition-title">Состав блюда:</div>
+      <p id="dish-composition" class="composition-text">Загрузка описания...</p>
+    </div>
+  </section>
 
 </body>
 </html>

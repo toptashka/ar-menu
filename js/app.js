@@ -1,175 +1,175 @@
-window.isDetached = false;
+window.menuData = {};
+window.currentDishId = 'burger';
+window.isCutMode = false;
 
-// 1. Вращение одним пальцем и масштаб (зум) двумя пальцами
-AFRAME.registerComponent('drag-rotate', {
-  init: function () {
-    let isDragging = false;
-    let prevX = 0, prevY = 0;
-    let initialPinchDist = null;
+// 1. Инициализация при загрузке страницы: гибридный запрос (SQL API -> fallback на data/menu.json)
+document.addEventListener("DOMContentLoaded", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const dishFromUrl = urlParams.get('dish');
 
-    window.addEventListener('touchstart', e => { 
-      if (e.target.closest('#bottom-sheet') || e.target.closest('.btn')) return;
-      if (e.touches.length === 1) {
-        isDragging = true;
-        prevX = e.touches[0].clientX;
-        prevY = e.touches[0].clientY;
-      } else if (e.touches.length === 2) {
-        isDragging = false;
-        initialPinchDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    });
-
-    window.addEventListener('touchmove', e => {
-      if (e.touches.length === 1 && isDragging) {
-        let deltaX = e.touches[0].clientX - prevX;
-        let deltaY = e.touches[0].clientY - prevY;
-        prevX = e.touches[0].clientX;
-        prevY = e.touches[0].clientY;
-
-        let rot = this.el.getAttribute('rotation');
-        this.el.setAttribute('rotation', {
-          x: rot.x + deltaY * 0.5,
-          y: rot.y + deltaX * 0.5,
-          z: rot.z
-        });
-      } else if (e.touches.length === 2 && initialPinchDist) {
-        let currentDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        let ratio = currentDist / initialPinchDist;
-        initialPinchDist = currentDist;
-
-        let s = this.el.getAttribute('scale');
-        let newScale = Math.min(Math.max(s.x * ratio, 0.15), 2.0);
-        this.el.setAttribute('scale', `${newScale} ${newScale} ${newScale}`);
-      }
-    });
-
-    window.addEventListener('touchend', () => {
-      isDragging = false;
-      initialPinchDist = null;
-    });
-  }
-});
-
-// 2. Удержание модели на экране после нажатия "Забрать блюдо"
-AFRAME.registerComponent('manual-detach', {
-  init: function () {
-    const marker = this.el;
-    this.lastValidMatrix = new AFRAME.THREE.Matrix4();
-    this.hasMatrix = false;
-
-    marker.addEventListener('targetFound', () => {
-      if (!window.isDetached) {
-        document.getElementById('action-buttons').style.display = 'flex';
-        const hint = document.getElementById('hint');
-        hint.style.opacity = '1';
-        hint.innerText = "Блюдо найдено! Нажми 'Забрать блюдо', чтобы зафиксировать его.";
-      }
-    });
-
-    marker.addEventListener('targetLost', () => {
-      if (!window.isDetached) {
-        document.getElementById('action-buttons').style.display = 'none';
-        const hint = document.getElementById('hint');
-        hint.style.opacity = '1';
-        hint.innerText = "Наведи камеру на маркер на столе";
-      }
-    });
-  },
-
-  tick: function () {
-    // Пока блюдо на маркере — запоминаем его текущие координаты
-    if (!window.isDetached) {
-      if (this.el.object3D.visible) {
-        this.lastValidMatrix.copy(this.el.object3D.matrix);
-        this.hasMatrix = true;
-      }
-    } else if (this.hasMatrix) {
-      // Когда нажали "Забрать" — принудительно держим модель видимой перед камерой!
-      this.el.object3D.visible = true;
-      this.el.object3D.matrix.copy(this.lastValidMatrix);
+  try {
+    // Сначала пробуем получить данные с FastAPI бэкенда (SQL БД)
+    const apiRes = await fetch('/api/dishes', { cache: 'no-store' });
+    if (!apiRes.ok) throw new Error('API недоступен, переход на резервный JSON');
+    window.menuData = await apiRes.json();
+  } catch (err) {
+    // Если запущено автономно на GitHub Pages — читаем локальный data/menu.json
+    try {
+      const jsonRes = await fetch('./data/menu.json', { cache: 'no-store' });
+      window.menuData = await jsonRes.json();
+    } catch (jsonErr) {
+      console.error("Ошибка загрузки данных меню:", jsonErr);
+      return;
     }
   }
+
+  const dishKeys = Object.keys(window.menuData);
+  if (dishKeys.length === 0) return;
+
+  // Определяем стартовое блюдо из ?dish=... или берем первое
+  if (dishFromUrl && window.menuData[dishFromUrl]) {
+    window.currentDishId = dishFromUrl;
+    // Если открыто по целевому QR-коду блюда, скрываем верхний переключатель (или оставляем по желанию)
+    document.getElementById('dish-selector').style.display = 'none';
+  } else {
+    window.currentDishId = dishKeys.includes('burger') ? 'burger' : dishKeys[0];
+    renderDishSelector(dishKeys);
+  }
+
+  selectDish(window.currentDishId);
+  initSwipeGesture();
+  initARFallback();
 });
 
-// 3. Кнопка "Забрать блюдо" (отвязка от маркера)
-window.detachDish = function() {
-  window.isDetached = true;
-  document.body.classList.add('detached-mode');
+// 2. Рендер верхних кнопок выбора блюда (для общего режима витрины)
+function renderDishSelector(keys) {
+  const container = document.getElementById('dish-selector');
+  container.innerHTML = '';
+  keys.forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'dish-btn' + (key === window.currentDishId ? ' active' : '');
+    btn.innerText = window.menuData[key].name;
+    btn.onclick = () => selectDish(key, btn);
+    container.appendChild(btn);
+  });
+}
 
-  // Меняем кнопки внизу
-  document.getElementById('btn-detach').style.display = 'none';
-  document.getElementById('btn-info').style.display = 'block';
-  document.getElementById('btn-reset').style.display = 'block';
-
-  const hint = document.getElementById('hint');
-  hint.style.opacity = '1';
-  hint.innerText = "Блюдо зафиксировано! Можешь убрать камеру и крутить его пальцем.";
-  setTimeout(() => {
-    if (window.isDetached) hint.style.opacity = '0';
-  }, 3500);
-};
-
-// 4. Кнопка "Вернуть на маркер"
-window.resetAR = function() {
-  window.isDetached = false;
-  document.body.classList.remove('detached-mode');
-
-  document.getElementById('bottom-sheet').classList.remove('active');
-  document.getElementById('btn-detach').style.display = 'block';
-  document.getElementById('btn-info').style.display = 'none';
-  document.getElementById('btn-reset').style.display = 'none';
-  document.getElementById('action-buttons').style.display = 'none';
-
-  const hint = document.getElementById('hint');
-  hint.style.opacity = '1';
-  hint.innerText = "Наведи камеру на маркер на столе";
-};
-
-// 5. Открыть/закрыть шторку КБЖУ
-window.toggleInfo = function() {
-  document.getElementById('bottom-sheet').classList.toggle('active');
-};
-
-window.menuData = {};
-
-// Переключение блюд
-window.switchDish = function(dishId, btnElement) {
-  if (window.isDetached) return; // Блокируем смену блюда в воздухе
-  
-  // Меняем 3D-модель
-  document.getElementById('marker-dish').setAttribute('src', window.menuData[dishId].model);
-  
-  // Подсвечиваем активную кнопку
-  document.querySelectorAll('.dish-btn').forEach(btn => btn.classList.remove('active'));
-  btnElement.classList.add('active');
-  
-  // Обновляем КБЖУ
-  updateMenuUI(dishId);
-};
-
-// Функция обновления текста в шторке
-window.updateMenuUI = function(dishId) {
+// 3. Выбор блюда и обновление 3D-модели и КБЖУ
+window.selectDish = function(dishId, btnElement = null) {
   const dish = window.menuData[dishId];
-  document.querySelector('.dish-title').innerText = dish.name;
-  document.querySelector('#val-cal').innerText = dish.calories;
-  document.querySelector('#val-pro').innerText = dish.protein + 'г';
-  document.querySelector('#val-fat').innerText = dish.fat + 'г';
-  document.querySelector('#val-carb').innerText = dish.carbs + 'г';
+  if (!dish) return;
+
+  window.currentDishId = dishId;
+  window.isCutMode = false;
+  updateCutButtonUI();
+
+  // Обновляем 3D-модель в <model-viewer>
+  const viewer = document.getElementById('dish-viewer');
+  const modelPath = dish.model_whole || dish.model;
+  viewer.setAttribute('src', modelPath);
+
+  // Обновляем подсветку кнопок в селекторе
+  if (btnElement) {
+    document.querySelectorAll('.dish-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+  }
+
+  // Заполняем КБЖУ и Состав
+  document.getElementById('dish-title').innerText = dish.name;
+  document.getElementById('val-cal').innerText = dish.calories;
+  document.getElementById('val-pro').innerText = dish.protein + ' г';
+  document.getElementById('val-fat').innerText = dish.fat + ' г';
+  document.getElementById('val-carb').innerText = dish.carbs + ' г';
+  document.getElementById('dish-composition').innerText =
+    dish.composition || 'Натуральные ингредиенты по фирменной рецептуре заведения.';
+
+  // Покажем кнопку "В разрезе", если задана модель разреза
+  const cutBtn = document.getElementById('btn-cut');
+  cutBtn.style.display = (dish.model_cut || dish.model_whole || dish.model) ? 'flex' : 'none';
 };
 
-// Загрузка базы данных при старте
-document.addEventListener("DOMContentLoaded", () => {
-  fetch('./data/menu.json')
-    .then(response => response.json())
-    .then(data => {
-      window.menuData = data;
-      updateMenuUI('burger'); // Блюдо по умолчанию при запуске
-    })
-    .catch(err => console.error("Ошибка загрузки БД:", err));
-});
+// 4. Переключение режима "Целая модель / В разрезе"
+window.toggleCutView = function() {
+  const dish = window.menuData[window.currentDishId];
+  if (!dish) return;
+
+  const viewer = document.getElementById('dish-viewer');
+  window.isCutMode = !window.isCutMode;
+
+  if (window.isCutMode) {
+    const cutSrc = dish.model_cut || dish.model_whole || dish.model;
+    viewer.setAttribute('src', cutSrc);
+  } else {
+    const wholeSrc = dish.model_whole || dish.model;
+    viewer.setAttribute('src', wholeSrc);
+  }
+
+  updateCutButtonUI();
+};
+
+function updateCutButtonUI() {
+  const cutBtn = document.getElementById('btn-cut');
+  const cutText = document.getElementById('btn-cut-text');
+  if (window.isCutMode) {
+    cutBtn.classList.add('active');
+    cutText.innerText = 'Целиком';
+  } else {
+    cutBtn.classList.remove('active');
+    cutText.innerText = 'В разрезе';
+  }
+}
+
+// 5. Раскрытие / закрытие нижней шторки с составом (клик и свайп вверх-вниз)
+window.toggleSheet = function(forceState = null) {
+  const sheet = document.getElementById('bottom-sheet');
+  const hint = document.getElementById('sheet-toggle-hint');
+  const isExpanded = forceState !== null ? forceState : !sheet.classList.contains('expanded');
+
+  if (isExpanded) {
+    sheet.classList.add('expanded');
+    hint.innerText = 'Скрыть ▼';
+  } else {
+    sheet.classList.remove('expanded');
+    hint.innerText = 'Состав ▲';
+  }
+};
+
+function initSwipeGesture() {
+  const sheet = document.getElementById('bottom-sheet');
+  let startY = 0;
+
+  sheet.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  sheet.addEventListener('touchend', e => {
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = startY - endY;
+    if (deltaY > 35) {
+      toggleSheet(true);  // Свайп вверх -> показать полный состав
+    } else if (deltaY < -35) {
+      toggleSheet(false); // Свайп вниз -> свернуть состав
+    }
+  }, { passive: true });
+}
+
+// 6. Явный запуск SLAM AR-режима ("Поставить на стол 1:1")
+function initARFallback() {
+  const viewer = document.getElementById('dish-viewer');
+  const fallbackBtn = document.getElementById('ar-fallback-btn');
+
+  viewer.addEventListener('load', () => {
+    if (!viewer.canActivateAR) {
+      fallbackBtn.style.display = 'block';
+    }
+  });
+}
+
+window.triggerAR = function() {
+  const viewer = document.getElementById('dish-viewer');
+  if (viewer.canActivateAR) {
+    viewer.activateAR();
+  } else {
+    alert('Для проекции блюда на стол в масштабе 1:1 откройте страницу на смартфоне с поддержкой ARCore (Android) или ARKit (iOS) по защищенному HTTPS-соединению.');
+  }
+};

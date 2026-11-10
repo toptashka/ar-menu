@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  ar-menu-web:
+    build: .
+    container_name: ar-menu-service
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./ar_menu.db
+      - ADMIN_TOKEN=admin123
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: unless-stopped

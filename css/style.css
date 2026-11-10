@@ -1,73 +1,277 @@
-body { margin: 0; overflow: hidden; font-family: sans-serif; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* Прячем системную кнопку VR */
-.a-enter-vr, .a-enter-ar { display: none !important; }
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: radial-gradient(circle at 50% 35%, #2b303c 0%, #12141a 100%);
+  color: #1c1c1e;
+  user-select: none;
+}
 
-/* Прячем рамку сканирования, когда блюдо уже зафиксировано на экране */
-body.detached-mode .mindar-ui-overlay { display: none !important; }
-
-/* Подсказки */
-#hint { 
-  position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
-  background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; 
-  border-radius: 20px; font-size: 14px; z-index: 9999; text-align: center; width: 80%;
-  transition: opacity 0.3s;
+/* Верхняя панель и переключатель блюд */
+.top-bar {
+  position: fixed;
+  top: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
   pointer-events: none;
 }
 
-/* Контейнер для кнопок действий */
-#action-buttons {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-  display: none; gap: 10px; z-index: 9998; width: max-content;
+.dish-selector {
+  pointer-events: auto;
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  padding: 6px;
+  border-radius: 22px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  max-width: 92vw;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-
-.btn {
-  padding: 12px 18px; border: none; border-radius: 25px;
-  font-size: 15px; font-weight: bold; cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-}
-
-#btn-detach { background: #007AFF; color: white; }
-#btn-info { background: #34C759; color: white; display: none; }
-#btn-reset { background: rgba(0, 0, 0, 0.75); color: white; display: none; }
-
-/* Шторка КБЖУ */
-#bottom-sheet {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 20px 20px 0 0; padding: 20px 20px 30px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.15); z-index: 9999;
-  transform: translateY(100%);
-  transition: transform 0.3s ease-out;
-}
-#bottom-sheet.active { transform: translateY(0); }
-
-.close-btn {
-  position: absolute; right: 20px; top: 15px;
-  background: none; border: none; font-size: 26px; color: #999; cursor: pointer;
-}
-
-.dish-title { font-size: 22px; font-weight: bold; margin: 0 0 15px 0; }
-.nutrition-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
-.val { font-size: 18px; font-weight: bold; color: #111; }
-.lbl { font-size: 12px; color: #666; }
-
-/* --- Селектор блюд --- */
-#dish-selector {
-  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 8px; z-index: 9998; 
-  background: rgba(255, 255, 255, 0.9); padding: 8px; 
-  border-radius: 20px; overflow-x: auto; width: max-content; max-width: 90vw;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.dish-selector::-webkit-scrollbar {
+  display: none;
 }
 
 .dish-btn {
-  padding: 8px 16px; border: none; border-radius: 15px; 
-  background: transparent; font-weight: bold; 
-  cursor: pointer; white-space: nowrap; color: #333;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 16px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a3a3c;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
-.dish-btn.active { background: #007AFF; color: white; }
+.dish-btn.active {
+  background: #007AFF;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
+}
 
-/* Прячем селектор блюд, когда блюдо оторвано от стола */
-body.detached-mode #dish-selector { display: none; }
+/* Плавающая кнопка "В разрезе" */
+.floating-cut-btn {
+  position: fixed;
+  right: 16px;
+  top: 84px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.floating-cut-btn.active {
+  background: #FF9500;
+  color: #fff;
+  border-color: #FF9500;
+}
+
+.floating-cut-btn:active {
+  transform: scale(0.95);
+}
+
+/* Контейнер 3D-плеера */
+.viewer-wrapper {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+model-viewer {
+  width: 100%;
+  height: calc(100vh - 140px);
+  background-color: transparent;
+  --poster-color: transparent;
+}
+
+/* Кнопка "Поставить на стол (1:1)" */
+.ar-cta-btn {
+  position: fixed;
+  bottom: 185px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  padding: 14px 26px;
+  border: none;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #007AFF 0%, #0051FF 100%);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.45);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ar-cta-btn:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.fallback-ar {
+  display: none;
+}
+
+/* Оверлей загрузки */
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  gap: 12px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #007AFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Двухступенчатая нижняя шторка (КБЖУ + Состав по свайпу) */
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 120;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  border-radius: 24px 24px 0 0;
+  padding: 10px 20px 24px;
+  box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.28);
+  transform: translateY(calc(100% - 165px));
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  max-height: 75vh;
+}
+
+.bottom-sheet.expanded {
+  transform: translateY(0);
+}
+
+.sheet-handle-area {
+  cursor: pointer;
+  padding-bottom: 6px;
+}
+
+.drag-handle {
+  width: 42px;
+  height: 5px;
+  background: #d1d1d6;
+  border-radius: 3px;
+  margin: 0 auto 10px;
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dish-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+  color: #111;
+}
+
+.sheet-toggle-hint {
+  font-size: 13px;
+  font-weight: 600;
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 12px;
+}
+
+/* Сетка КБЖУ */
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  text-align: center;
+}
+
+.nutri-card {
+  background: #f2f2f7;
+  border-radius: 14px;
+  padding: 10px 6px;
+}
+
+.val {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1c1c1e;
+}
+
+.lbl {
+  font-size: 11px;
+  color: #6c6c70;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Блок состава */
+.composition-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e5ea;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.bottom-sheet.expanded .composition-block {
+  opacity: 1;
+}
+
+.composition-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8e8e93;
+  margin-bottom: 6px;
+}
+
+.composition-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #2c2c2e;
+  margin: 0;
+}
