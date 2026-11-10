@@ -5,28 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AR Меню — 3D Визуализация блюд</title>
 
-  <!-- Google Model Viewer для 3D и безмаркерного SLAM WebAR (ARCore / ARKit) -->
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=5">
-  <script src="./js/app.js?v=5" defer></script>
+  <link rel="stylesheet" href="./css/style.css?v=7">
+  <script src="./js/app.js?v=7" defer></script>
 </head>
 <body>
 
-  <!-- Верхняя панель: подсказка и селектор блюд (скрывается, если открыт конкретный ?dish=...) -->
   <header class="top-bar">
-    <div id="dish-selector" class="dish-selector">
-      <!-- Кнопки генерируются автоматически из БД / menu.json -->
-    </div>
+    <div id="dish-selector" class="dish-selector"></div>
   </header>
 
-  <!-- Плавающая кнопка переключения режима "В разрезе" -->
   <button id="btn-cut" class="floating-cut-btn" onclick="toggleCutView()" title="Посмотреть в разрезе">
-    <span class="cut-icon">🔪</span>
     <span id="btn-cut-text">В разрезе</span>
   </button>
 
-  <!-- Основная 3D-витрина и SLAM AR-плеер -->
   <main class="viewer-wrapper">
     <model-viewer
       id="dish-viewer"
@@ -39,18 +32,20 @@
       shadow-intensity="1.2"
       shadow-softness="0.8"
       exposure="1.05"
-      touch-action="pan-y"
+      touch-action="none"
+      min-camera-orbit="auto auto 20%"
+      max-camera-orbit="auto auto 300%"
+      min-field-of-view="15deg"
+      max-field-of-view="90deg"
       ar
       ar-modes="webxr scene-viewer quick-look"
       ar-scale="fixed"
       ar-placement="floor">
 
-      <!-- Кастомная кнопка запуска SLAM AR ("Поставить на стол" в масштабе 1:1) -->
       <button slot="ar-button" id="ar-button" class="ar-cta-btn">
-        📷 Поставить на стол (1:1)
+        Поставить на стол (1:1)
       </button>
 
-      <!-- Индикатор загрузки 3D-модели -->
       <div id="loading-overlay" class="loading-overlay" slot="poster">
         <div class="spinner"></div>
         <span>Загрузка 3D-модели...</span>
@@ -58,22 +53,19 @@
     </model-viewer>
   </main>
 
-  <!-- Fallback-кнопка AR (если устройство тестируется с ПК или браузер требует явного вызова) -->
   <button id="ar-fallback-btn" class="ar-cta-btn fallback-ar" onclick="triggerAR()">
-    📷 Поставить на стол (1:1)
+    Поставить на стол (1:1)
   </button>
 
-  <!-- Нижняя двухступенчатая шторка: КБЖУ (всегда видно) + Состав (по свайпу вверх / клику) -->
   <section id="bottom-sheet" class="bottom-sheet">
     <div id="sheet-handle-area" class="sheet-handle-area" onclick="toggleSheet()">
       <div class="drag-handle"></div>
       <div class="sheet-header">
         <h1 id="dish-title" class="dish-title">Загрузка...</h1>
-        <span id="sheet-toggle-hint" class="sheet-toggle-hint">Состав ▲</span>
+        <span id="sheet-toggle-hint" class="sheet-toggle-hint">Состав</span>
       </div>
     </div>
 
-    <!-- Сетка КБЖУ -->
     <div class="nutrition-grid">
       <div class="nutri-card">
         <div id="val-cal" class="val">-</div>
@@ -93,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Выдвижной блок с полным составом -->
     <div id="composition-block" class="composition-block">
       <div class="composition-title">Состав блюда:</div>
       <p id="dish-composition" class="composition-text">Загрузка описания...</p>

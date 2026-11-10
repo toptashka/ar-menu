@@ -63,16 +63,16 @@ body {
   box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
 }
 
-/* Плавающая кнопка "В разрезе" */
+/* Плавающая кнопка "В разрезе" - перенесена вниз вправо */
 .floating-cut-btn {
   position: fixed;
-  right: 16px;
   top: 84px;
-  z-index: 100;
+  right: 16px;
+  z-index: 110;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
   background: rgba(28, 28, 30, 0.85);
@@ -109,19 +109,17 @@ model-viewer {
   --poster-color: transparent;
 }
 
-/* Кнопка "Поставить на стол (1:1)" */
 .ar-cta-btn {
   position: fixed;
-  bottom: 185px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 95;
-  padding: 14px 26px;
+  bottom: 180px;
+  left: 16px;
+  z-index: 110;
+  padding: 12px 20px;
   border: none;
-  border-radius: 28px;
+  border-radius: 24px;
   background: linear-gradient(135deg, #007AFF 0%, #0051FF 100%);
   color: #ffffff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2px;
   box-shadow: 0 8px 24px rgba(0, 122, 255, 0.45);
@@ -131,7 +129,7 @@ model-viewer {
 }
 
 .ar-cta-btn:active {
-  transform: translateX(-50%) scale(0.96);
+  transform: scale(0.96);
 }
 
 .fallback-ar {
@@ -163,7 +161,7 @@ model-viewer {
   to { transform: rotate(360deg); }
 }
 
-/* Двухступенчатая нижняя шторка (КБЖУ + Состав по свайпу) */
+/* Двухступенчатая нижняя шторка */
 .bottom-sheet {
   position: fixed;
   bottom: 0;

@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Виртуальные окружения
+venv/
+.venv/
+env/
+ENV/
+
+*.db
+*.sqlite3
+ar_menu.db
+
+.env
+.env.local
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+*.log
